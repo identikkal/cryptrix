@@ -1,0 +1,31 @@
+name: Cryptix Scheduler
+
+on:
+  schedule:
+    - cron: '30 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: cryptix-scheduler3
+  cancel-in-progress: false
+
+jobs:
+  run-cryptix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    steps:
+      - name: Run Docker Container
+        run: |
+          docker pull identikkal/cryptix:latest
+          docker run --rm \
+            --cap-add=NET_ADMIN \
+            --device=/dev/net/tun \
+            identikkal/cryptix:latest
+      - name: Trigger Workflow Again
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/identikkal/cryptrix/actions/workflows/cryptix-scheduler3.yml/dispatches \
+            -d '{"ref":"main"}'
